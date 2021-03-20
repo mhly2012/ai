@@ -1,9 +1,11 @@
 #pragma once
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <unistd.h> //to declare STDOUT_FILENO, to call sleep, read, getcwd
+//#include <stdio.h>
+#include <stdlib.h> //to call malloc, free
+#include <string.h> //to call strcpy, memset
+
 #include "util/debug.h"
+
 #define true 1
 #define false 0
 #define bool int
