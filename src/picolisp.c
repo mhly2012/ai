@@ -1,5 +1,6 @@
 #include "picolisp.h"
 
+_pl* parse_list(char *string,_parser *parser);
 _pl* pl_get(_pl* root,int index){
 // index x -> 0 is fault, 1,2,3,..., 몫은 사이즈와 그 부분집합 내에서 인덱스를 >담고, 나머지가 루트에서 부분집합 자체의 인덱스를 가리킨다.	
 	int quot = index;
@@ -29,30 +30,28 @@ void pl_replace(_pl* root, int index, _pl* rep){
 	int quot = index;
 	int rem;
 	_pl* tmp = root;
-	if(_Generic(rep,_pl*:1,default:0)){
-		do{
-			if(str_cmp(tmp->type,"set")==0){
+	do{
+		if(str_cmp(tmp->type,"set")==0){
+			tmp = null;
+			quot=0;
+		}else{
+			rem = quot % (tmp->size+1);
+			if(rem ==0){
 				tmp = null;
 				quot=0;
 			}else{
-				rem = quot % (tmp->size+1);
-				if(rem ==0){
-					tmp = null;
-					quot=0;
-				}else{
-					quot = quot / (tmp->size+1);
-					if(quot==0){
-						tmp->array[rem-1] = rep;
-					
-					}
-					else{
-						tmp = tmp->array[rem-1];
-					}
+				quot = quot / (tmp->size+1);
+				if(quot==0){
+					tmp->array[rem-1] = rep;
+				}
+				else{
+					tmp = tmp->array[rem-1];
 				}
 			}
-		}while(quot!=0);
-	}
+		}
+	}while(quot!=0);
 }
+
 
 char* pl_str(_pl* root){
 	//_pl* tmp = root;
@@ -167,6 +166,21 @@ char* next_token(char *string, _parser *parser){
 			tmp = (char*)realloc(tmp,sizeof(char)*2);
 			return tmp;
 		}
+		else if(string[parser->index]=='['){
+			tmp[0]='[';
+			tmp[1]='\0';
+			debug_print(tmp);
+			parser->index++;
+			tmp = (char*)realloc(tmp,sizeof(char)*2);
+			return tmp;
+		}else if(string[parser->index]==']'){
+			tmp[0]=']';
+			tmp[1]='\0';
+			debug_print(tmp);
+			parser->index++;
+			tmp = (char*)realloc(tmp,sizeof(char)*2);
+			return tmp;
+		}
 		else if(string[parser->index]==null){
 			debug_print("string end");
 			free(tmp);
@@ -204,7 +218,7 @@ char* open_file(char *file_name){
 	return string;
 }
 
-
+/*
 _pl* parse_primitive(char* token){
 	_pl* pl = (_pl*)malloc(sizeof(_pl));
 	switch(token[0]){
@@ -225,9 +239,13 @@ _pl* parse_primitive(char* token){
 			break;
 	}	
 }
+*/
 _pl* parse_element(char *string, _parser *parser, char* tok){
 	if(tok[0]=='('){
 		return parse_set(string,parser);	
+	}
+	if(tok[0]=='['){
+		return parse_list(string,parser);
 	}
 	else{
 		_pl* element = (_pl*)malloc(sizeof(_pl));
@@ -235,8 +253,8 @@ _pl* parse_element(char *string, _parser *parser, char* tok){
 		element->data = tok;
 		return element;
 	}
-		 
 }
+// combination
 _pl* parse_set(char *string,_parser *parser){
 	_pl* set = (_pl*)malloc(sizeof(_pl));
 	set->type="set";
@@ -264,6 +282,35 @@ _pl* parse_set(char *string,_parser *parser){
 	}
 	return set;
 }
+// permutation
+_pl* parse_list(char *string,_parser *parser){
+	_pl* list = (_pl*)malloc(sizeof(_pl));
+	list->type="list";
+	_chain* chain = (_chain*)malloc(sizeof(_chain));
+	_chain* first = chain;
+	int cnt=0;
+	cnt = 0;
+	char *tok = next_token(string, parser);
+	while(tok[0]!=']'){
+		_pl* element = parse_element(string,parser,tok);
+		chain->element = element;
+		chain->next = (_chain*)malloc(sizeof(_chain));
+		chain = chain->next;
+		cnt++;
+		tok = next_token(string,parser);
+	}
+	chain->next = null;
+	list->array = (_pl**)malloc(sizeof(_pl*)*cnt);
+	list->size =cnt;
+	int i;
+	chain = first;
+	for(i=0;i<list->size;i++){
+		list->array[i]=chain->element;
+		chain = chain->next;
+	}
+	return list;
+}
+
 //eval
 //TODO : char* -> const char*
 void parse_instruction(char *string,_parser *parser){
@@ -276,6 +323,9 @@ void parse_instruction(char *string,_parser *parser){
                 if(tok[0]=='('){
                         instruction->function = parse_set(string,parser);
                 }
+		else if(tok[0]=='['){
+			instruction->function = parse_list(string,parser);
+		}
                 else{
                         _pl *eval = (_pl*)malloc(sizeof(_pl));
                         eval->type="primitive";
