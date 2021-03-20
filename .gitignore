@@ -1,2 +1,4 @@
 .DS_STORE
 ./build/comm
+./build/event_manager
+./src/device/event*
