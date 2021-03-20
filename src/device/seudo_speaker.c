@@ -143,18 +143,22 @@ void terminal_mode(){
         			parse_instruction(save_str,&parser);
 				_pl* sizepl = &(_pl){"primitive","0"};
 				_pl* datapl = &(_pl){"primitive",(char*)buffer};
-				PLreplace(parser.instruction_array[1],1,datapl);
+				pl_replace(parser.instruction_array[1],1,datapl);
+				//PLreplace(parser.instruction_array[1],1,datapl);
 				if(parser.instruction_array[1]->array[0]==datapl)	{
 					printf("same");
 				}
 				printf("\n");
 				char* str;
-				PLstr(parser.instruction_array[1],str);
+				str = pl_str(parser.instruction_array[1]);
+				//PLstr(parser.instruction_array[1],str);
 				char* its = i_to_s(str_len(str));
 				sizepl->data = its;
-				PLreplace(parser.instruction_array[0],2,sizepl);
+				pl_replace(parser.instruction_array[0],2,sizepl);
+				//PLreplace(parser.instruction_array[0],2,sizepl);
 				char* header;
-				PLstr(parser.instruction_array[0],header);
+				header = pl_str(parser.instruction_array[0]);
+				//PLstr(parser.instruction_array[0],header);
 				char* tmp = str_sum(header,"\n");
 				char *sstr = str_sum(tmp,str);
 				//printf(sstr);

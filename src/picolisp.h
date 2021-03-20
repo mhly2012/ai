@@ -14,7 +14,7 @@
 #define MAXIMUM_KEYWORD_LENGTH 10
 #define DEBUG_MODE
 // index x -> 0 is fault, 1,2,3,..., 몫은 사이즈와 그 부분집합 내에서 인덱스를 담고, 나머지가 타겟 부분집합 자체의 인덱스를 가리킨다.
-
+/*
 #define PLget(target, element_number ,response) \
 			{int quotient = element_number;\
 			int remainder;\
@@ -33,6 +33,7 @@
 			}\
 			}\
 			}while(quotient!=0);}
+*/
 typedef struct PicoList _pl;
 typedef struct PicoJob{
 	_pl* pl;
@@ -43,6 +44,7 @@ typedef struct PicoStack {
 	_pj* job;
 	_ps* base;
 } _ps;
+/*
 #define PLreplace(target, element_number, newer) \
 			{int pl_rep_quotient= element_number;\
 			int pl_rep_remainder;\
@@ -106,7 +108,7 @@ typedef struct PicoStack {
 				}\
 			}}
 			
-				
+*/				
 typedef struct PicoList _pl;
 typedef struct PicoSymbolicInstruction _psi;
 typedef struct Chain _chain;

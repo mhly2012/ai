@@ -305,8 +305,8 @@ int request_friend(const char* name){
 	parser2.prev_instruction = null;
 	parse_instruction(req,&parser2);
 	_pl* pl3;
-	//pl3 = pl_get(parser2.instruction_array[0],1);
-	PLget(parser2.instruction_array[0],1,pl3)
+	pl3 = pl_get(parser2.instruction_array[0],1);
+	//PLget(parser2.instruction_array[0],1,pl3)
 	if(str_cmp(pl3->data,"success")){
 		//printf("comm fd:%d\n",connfd);
 		friends[f_cnt].connfd = connfd;
