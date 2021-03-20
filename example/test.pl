@@ -1,0 +1,17 @@
+asd
+(define a 1)
+(define (abcd) (defg))
+(define (sd a b) (zxc a b))
+(read $reg1 0x1234567890abcde0)
+(write 0x1234567890abcde0 $reg1)
+(load-rom 0x1234567890abcde0 0 1000)
+(load $device $mem-addr $dev-addr $size)
+(load-hard-to-memory 0x1234567890abcde0 0 1000)
+(increase-counter $rom 4)
+(jmp-to $rom 0x12345678)
+(write $rom-sig-wire 1)
+(jmp-to $program-counter 0x1234)
+
+(mechanical-rotate-start-by-dc-current 1v)
+(read-by-channel $bus0 1)
+(generate-ac-current 1v 1mhz)
