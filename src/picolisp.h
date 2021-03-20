@@ -5,6 +5,7 @@
 #include <string.h> //to call strcpy, memset
 
 #include "util/debug.h"
+#include "util/str.h"
 
 #define true 1
 #define false 0
@@ -12,7 +13,8 @@
 #define null ((void*)0)
 #define MAXIMUM_KEYWORD_LENGTH 10
 #define DEBUG_MODE
-// index x -> 0 is fault, 1,2,3,...
+// index x -> 0 is fault, 1,2,3,..., 몫은 사이즈와 그 부분집합 내에서 인덱스를 담고, 나머지가 타겟 부분집합 자체의 인덱스를 가리킨다.
+
 #define PLget(target, element_number ,response) \
 			{int quotient = element_number;\
 			int remainder;\
@@ -62,6 +64,7 @@ typedef struct PicoStack {
 			}while(pl_rep_quotient!=0);\
 			}}
 //#define PLiter(pl, element, statement) \
+
 
 #define PLstr(target, str_buf) \
 			{int pl_str_loop = 1;\
@@ -144,3 +147,6 @@ typedef struct Parser{
 void parse_instruction(char *string,_parser *parser);
 char* open_file(char *file_name);
 int first_order_int_array(const char *,int*buf,int size);
+_pl* pl_get(_pl* root,int index);
+void pl_replace(_pl* root, int index, _pl* rep);
+char* pl_str(_pl* root);

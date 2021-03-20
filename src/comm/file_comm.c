@@ -34,11 +34,12 @@ char* parse_request(int connfd){
 			parser.index = 0;
 			parser.prev_instruction = null;
 			parse_instruction(buf,&parser);
-			_pl* pl;
+			_pl* pl = pl_get(parser.instruction_array[0],1);
 			//printf(buf);
-			PLget(parser.instruction_array[0],1,pl);
+			//PLget(parser.instruction_array[0],1,pl);
 			if(str_cmp(pl->data,"sof")){
-				PLget(parser.instruction_array[0],2,pl)
+				pl = pl_get(parser.instruction_array[0],2);
+				//PLget(parser.instruction_array[0],2,pl)
 				size = s_to_i(pl->data);
 				size++;
 				bufcur = 0;
@@ -125,10 +126,12 @@ if(setsockopt(listenfd, SOL_SOCKET,SO_REUSEADDR,(const void*)&optval,sizeof(int)
 		parser.prev_instruction = null;
 		parse_instruction(req,&parser);
 		_pl* pl;
-		PLget(parser.instruction_array[0],1,pl)
+		pl = pl_get(parser.instruction_array[0],1);
+		//PLget(parser.instruction_array[0],1,pl)
 
 		if(str_cmp(pl->data,"name")){
-			PLget(parser.instruction_array[0],2,pl)
+			pl = pl_get(parser.instruction_array[0],2);
+			//PLget(parser.instruction_array[0],2,pl)
 			char * name = pl->data;
 			/*
 			PLget(parser.instruction_array[1],1,pl)
@@ -228,10 +231,12 @@ int clip(_message* messages, int length){
 			parser.prev_instruction = null;
 			parse_instruction(req,&parser);
 			_pl* pl;
-			PLget(parser.instruction_array[0],1,pl);
+			pl = pl_get(parser.instruction_array[0],1);
+			//PLget(parser.instruction_array[0],1,pl);
 			//TODO : message order
 			if(pl->data=="contents"){
-				PLget(parser.instruction_array[0],2,pl);
+				pl = pl_get(parser.instruction_array[0],2);
+				//PLget(parser.instruction_array[0],2,pl);
 				messages[res_size].talk = pl->data;
 				messages[res_size].friend = friends[i];
 				if(res_size>=length) return res_size;
@@ -277,14 +282,18 @@ int request_friend(const char* name){
 	parser.prev_instruction = null;
 	parse_instruction(reqstr,&parser);
 	_pl* pl = &(_pl){"primitive",my_name};
-	PLreplace(parser.instruction_array[1],2,pl)
+	pl_replace(parser.instruction_array[1],2,pl);
+	//PLreplace(parser.instruction_array[1],2,pl)
 	reqstr = "";
-	PLstr(parser.instruction_array[1],reqstr);
+	reqstr = pl_str(parser.instruction_array[1]);
+	//PLstr(parser.instruction_array[1],reqstr);
 	char* its = i_to_s(str_len(reqstr));
 	_pl* pl2 = &(_pl){"primitive",its};
-	PLreplace(parser.instruction_array[0],2,pl2)
+	pl_replace(parser.instruction_array[0],2,pl2);
+	//PLreplace(parser.instruction_array[0],2,pl2)
 	char * header = "";
-	PLstr(parser.instruction_array[0],header);
+	header = pl_str(parser.instruction_array[0]);
+	//PLstr(parser.instruction_array[0],header);
 	char *ss2 = str_sum(header,"\n");
 	char *ss3 = str_sum(ss2,reqstr);
 	free(ss2);
@@ -296,6 +305,7 @@ int request_friend(const char* name){
 	parser2.prev_instruction = null;
 	parse_instruction(req,&parser2);
 	_pl* pl3;
+	//pl3 = pl_get(parser2.instruction_array[0],1);
 	PLget(parser2.instruction_array[0],1,pl3)
 	if(str_cmp(pl3->data,"success")){
 		//printf("comm fd:%d\n",connfd);

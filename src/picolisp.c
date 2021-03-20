@@ -1,5 +1,99 @@
 #include "picolisp.h"
 
+_pl* pl_get(_pl* root,int index){
+// index x -> 0 is fault, 1,2,3,..., 몫은 사이즈와 그 부분집합 내에서 인덱스를 >담고, 나머지가 루트에서 부분집합 자체의 인덱스를 가리킨다.	
+	int quot = index;
+	int rem;
+	_pl* ret = root;
+	do{
+		if(str_cmp(ret->type,"set")==0){
+			ret = null;
+			quot = 0;
+		}
+		else{
+			rem = quot%(ret->size+1);
+			if(rem==0){
+				ret = null;
+				quot = 0;
+			}
+			else{
+				quot = quot / (ret->size+1);
+				ret = ret->array[rem-1];
+			}
+		}
+	}while(quot!=0);
+	return ret;
+}
+
+void pl_replace(_pl* root, int index, _pl* rep){
+	int quot = index;
+	int rem;
+	_pl* tmp = root;
+	if(_Generic(rep,_pl*:1,default:0)){
+		do{
+			if(str_cmp(tmp->type,"set")==0){
+				tmp = null;
+				quot=0;
+			}else{
+				rem = quot % (tmp->size+1);
+				if(rem ==0){
+					tmp = null;
+					quot=0;
+				}else{
+					quot = quot / (tmp->size+1);
+					if(quot==0){
+						tmp->array[rem-1] = rep;
+					
+					}
+					else{
+						tmp = tmp->array[rem-1];
+					}
+				}
+			}
+		}while(quot!=0);
+	}
+}
+
+char* pl_str(_pl* root){
+	//_pl* tmp = root;
+	_pj* pj = &(_pj){root,0};
+	_ps* ps = &(_pl){pj,NULL};
+	char* ret = (char*)malloc(1);
+	ret[0] = '\0';
+	while(ps!=NULL){
+		_pj* curjob = ps->job;
+		int jidx = curjob->index;
+		if(jidx ==0){
+			char* tmp = ret;
+			ret = str_sum(ret,"(");
+			free(tmp);
+		}
+		if(str_cmp(curjob->pl->array[jidx]->type,"set")){
+			_pj* tmpjob = {curjob->pl->array[jidx],0};
+			_ps* tmpps = {tmpjob,ps};
+			ps = tmpps;
+		}else if(str_cmp(curjob->pl->array[jidx]->type,"primitive")){
+			if(jidx!=0){
+				char* tmp = ret;
+				ret = str_sum(ret," ");
+				free(tmp);
+			}
+			char* tmp = ret;
+			ret = str_sum(ret,curjob->pl->array[jidx]->data);
+			free(tmp);
+			curjob->index++;
+			jidx++;
+		}
+		if(jidx==curjob->pl->size){
+			char* tmp = ret;
+			ret = str_sum(ret,")");
+			free(tmp);
+			ps = ps->base;
+		}
+	}
+	return ret;
+}
+
 _pl* parse_set(char *string,_parser *parser);
 bool is_blank(char c){
 	switch(c){
