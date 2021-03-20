@@ -17,7 +17,7 @@ char* next_token2(const char* string){
 		if(*string=='('){
 			tmp[0]='(';
 			tmp[1]='\0';
-			debug_print(tmp)
+			debug_print(tmp);
 			string++;
 			tmp = (char*)realloc(tmp,sizeof(char)*2);
 			return tmp;
@@ -25,13 +25,13 @@ char* next_token2(const char* string){
 		else if(*string==')'){
 			tmp[0]=')';
 			tmp[1]='\0';
-			debug_print(tmp)
+			debug_print(tmp);
 			string++;
 			tmp = (char*)realloc(tmp,sizeof(char)*2);
 			return tmp;
 		}
 		else if(*string==null){
-			debug_print("string end")
+			debug_print("string end");
 			free(tmp);
 			return null;
 		}
@@ -45,7 +45,7 @@ char* next_token2(const char* string){
 			string++;		
 		}
 		tmp[tmp_size] = '\0';
-		debug_print(tmp)
+		debug_print(tmp);
 		tmp = (char*)realloc(tmp,sizeof(char)*(tmp_size+1));
 		return tmp;		
 	}
@@ -60,7 +60,7 @@ char* next_token(char *string, _parser *parser){
 		if(string[parser->index]=='('){
 			tmp[0]='(';
 			tmp[1]='\0';
-			debug_print(tmp)
+			debug_print(tmp);
 			parser->index++;
 			tmp = (char*)realloc(tmp,sizeof(char)*2);
 			return tmp;
@@ -68,13 +68,13 @@ char* next_token(char *string, _parser *parser){
 		else if(string[parser->index]==')'){
 			tmp[0]=')';
 			tmp[1]='\0';
-			debug_print(tmp)
+			debug_print(tmp);
 			parser->index++;
 			tmp = (char*)realloc(tmp,sizeof(char)*2);
 			return tmp;
 		}
 		else if(string[parser->index]==null){
-			debug_print("string end")
+			debug_print("string end");
 			free(tmp);
 			return null;
 		}
@@ -88,7 +88,7 @@ char* next_token(char *string, _parser *parser){
 			parser->index++;		
 		}
 		tmp[tmp_size] = '\0';
-		debug_print(tmp)
+		debug_print(tmp);
 		tmp = (char*)realloc(tmp,sizeof(char)*(tmp_size+1));
 		return tmp;		
 	}
@@ -195,10 +195,10 @@ void parse_instruction(char *string,_parser *parser){
 	int cnt=0;
 	_psi* inst = parser->prev_instruction;
 	while(inst!=null){
-		debug_print(inst->function->type)
+		debug_print(inst->function->type);
 		inst = inst->prev;
 		cnt++;
-		debug_print("iter")
+		debug_print("iter");
 	}
 	parser->instruction_array = (_pl**)malloc(sizeof(_pl*)*cnt);
 	parser->array_size = cnt;

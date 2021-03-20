@@ -99,11 +99,11 @@ if(setsockopt(listenfd, SOL_SOCKET,SO_REUSEADDR,(const void*)&optval,sizeof(int)
 	mem_move(serveraddr.sun_path,fname,str_len(fname)+1);
 	free(fname);
         if(bind(listenfd, (struct sockaddr*)&serveraddr,sizeof(serveraddr))<0){
-		debug_print("bind fail\n")
+		debug_print("bind fail\n");
                 return NULL;
 	}
         if(listen(listenfd,LISTENQ)<0) {
-		debug_print("listen fail\n")
+		debug_print("listen fail\n");
 		return NULL;
 	}
 
