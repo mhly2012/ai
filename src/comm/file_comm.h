@@ -25,4 +25,5 @@ void* accept_friend(void*);
 int request_friend(const char*);
 void info(const char*, const char*);
 int clip(_message*,int);
-
+void remove_friend(const char* name);
+int clip_blocking(_message* messages,int length);

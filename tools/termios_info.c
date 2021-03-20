@@ -1,3 +1,4 @@
+#include <stdio.h> // to call printf 
 #include <termios.h>
 #include <unistd.h>
 

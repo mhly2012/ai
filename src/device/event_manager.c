@@ -84,7 +84,7 @@ void save_data(const char* name,const char* data){
 	FILE* file;
 	char* tmp = str_sum("./data/",name);
 	file =	fopen(tmp,"wb");
-	if(file==NULL) return NULL;
+	if(file==NULL) return ;
 	fwrite(data,20*10*4,1,file);
 	fclose(file);
 	free(tmp);

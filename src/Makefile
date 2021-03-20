@@ -16,7 +16,7 @@ DEV_OBJ_DIR=../dev_obj
 COMM_OBJ_DIR=../comm_obj
 UTIL_OBJ_DIR=../util_obj
 FLAGS=-Wall -I./
-DEBUGFLAGS=-g -DDEBUG $(FLAGS)
+DEBUGFLAGS=-g -DDEBUG $(FLAGS) 
 
 OBJ=$(NAME).o
 CPU_OBJ=$(CPU).o
