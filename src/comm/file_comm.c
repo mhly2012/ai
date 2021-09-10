@@ -12,10 +12,11 @@ static char *my_name;
 
 static char* prefix;
 char* parse_request(int connfd){
+	
 	ssize_t rret;
 	char buf_c;
-	char fbuf[100];
-	char* buf = fbuf;
+	int buf_max = 100;
+	char* buf = (char*)malloc(buf_max);
 	size_t bufcur=0,prevcur=0;
 	size_t size;
 	while(1){
@@ -28,6 +29,10 @@ char* parse_request(int connfd){
 		if(errno==EAGAIN) return NULL;
 		buf[bufcur] = buf_c;
 		bufcur++;
+		if(bufcur==buf_max) {
+			buf_max*=2;
+			buf = (char*)realloc(buf,buf_max);
+		}
 		if(buf_c=='\n') {
 			buf[bufcur] = null;
 			_parser parser;
@@ -35,8 +40,6 @@ char* parse_request(int connfd){
 			parser.prev_instruction = null;
 			parse_instruction(buf,&parser);
 			_pl* pl = pl_get(parser.instruction_array[0],1);
-			//printf(buf);
-			//PLget(parser.instruction_array[0],1,pl);
 			if(str_cmp(pl->data,"sof")){
 				pl = pl_get(parser.instruction_array[0],2);
 				//PLget(parser.instruction_array[0],2,pl)
@@ -87,10 +90,8 @@ void* accept_friend(void* args){
 	int connfd;
         int listenfd, optval = 1;
         listenfd = socket(PF_LOCAL, SOCK_STREAM,0);
-        
 	
-	
-if(setsockopt(listenfd, SOL_SOCKET,SO_REUSEADDR,(const void*)&optval,sizeof(int))<0) {
+	if(setsockopt(listenfd, SOL_SOCKET,SO_REUSEADDR,(const void*)&optval,sizeof(int))<0) {
 		printf("setsockopt fail\n");
 		return NULL;
 	}
@@ -127,17 +128,10 @@ if(setsockopt(listenfd, SOL_SOCKET,SO_REUSEADDR,(const void*)&optval,sizeof(int)
 		parse_instruction(req,&parser);
 		_pl* pl;
 		pl = pl_get(parser.instruction_array[0],1);
-		//PLget(parser.instruction_array[0],1,pl)
 
 		if(str_cmp(pl->data,"name")){
 			pl = pl_get(parser.instruction_array[0],2);
-			//PLget(parser.instruction_array[0],2,pl)
 			char * name = pl->data;
-			/*
-			PLget(parser.instruction_array[1],1,pl)
-			if(str_cmp(pl->data,"purpose")){
-
-			}*/
 			//TODO : add friend
 			//fcntl(connfd,F_SETFL, O_NONBLOCK);
 
@@ -339,9 +333,7 @@ int init_file_comm(const char* name,int max_friend_cnt){
 		return 0;
 	}
 	friends = (_friend*)malloc(sizeof(_friend)*max_friend_cnt);
-	//queue = (_message*)malloc(sizeof(_message)*max_queue);
 	max_friends = max_friend_cnt;
-	//max_queue = max_queue;
 	my_name = name;
 	return 1;
 }

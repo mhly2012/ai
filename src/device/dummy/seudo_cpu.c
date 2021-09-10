@@ -2,10 +2,12 @@
 #include "util/map.h"
 
 #define lazy-first 'z'
+#define SM_STR		"symbol_merge"
 #define READ_STR	"read"
 #define WRITE_STR	"write"
 #define ADD_STR		"add"
 #define SUB_STR		"sub"
+#define SM	'm'
 #define READ	'r'
 #define WRITE	'w'
 #define ADD	'a'
@@ -28,6 +30,8 @@ typedef struct Wire{
 	//|sig_to_rom(1bit)|data_from_rom(sizeof(_sci32)|....|
 } _wire_table;
 
+
+
 typedef struct Register{
 	long a;
 	long b;
@@ -44,7 +48,7 @@ typedef struct SeudoCPUInstruction{
 		};
 		struct{
 			char reg;
-			int addr;
+			int value;
 		};
 	};
 } _sci32;
@@ -58,10 +62,15 @@ typedef struct SeudoCPUInstruction64{
                 };
                 struct{
                         char reg;
-                        long addr;
+                        long value;
                 };
         };	
 } _sci64;
+
+typedef struct SingleCPU{
+	_reg_table regs;
+	_sci64* memory;
+} _cpu;
 
 char eval_reg(char* string){
 	SWITCH_STRING(string)
@@ -154,6 +163,7 @@ int check_order(_pl* pl){
 	}
 }
 
+// pl 구조체 -> 64비트 명령어 구조체` 
 void inst_alloc(_pl* pl, _sci64* loc){
 	debug_print(pl->type);
 	int order = check_order(pl);
@@ -166,13 +176,13 @@ void inst_alloc(_pl* pl, _sci64* loc){
 			loc->type =READ;
 			debug_print("read");
 			loc->reg = eval_reg(pl->array[1]->data);
-			loc->addr = eval_hex(pl->array[2]->data);
+			loc->value = eval_hex(pl->array[2]->data);
 			break;
 		CASE("write")
 			loc->type =WRITE;
 			debug_print("write");
 			loc->reg = eval_reg(pl->array[1]->data);
-			loc->addr = eval_hex(pl->array[2]->data);
+			loc->value = eval_hex(pl->array[2]->data);
 			break;
 		CASE("add")
 			loc->type=ADD;
@@ -189,7 +199,11 @@ void inst_alloc(_pl* pl, _sci64* loc){
 		DEFAULT()
 			break;
 	END_SWITCH()
+	}else if(pl->type=="list"){
+
 	}else if(pl->type=="primitive"){
+
+	}else{
 
 	}
 }
@@ -198,6 +212,7 @@ _sci32* bytecode_gen(_parser* parser, void* memory){
 
 }
 
+// pl 구조체 배열 -> 64비트 명령어 구조체 배열
 _sci64* bytecode_gen64(_parser* parser, void* memory){
 	_sci64 *inst_space = (_sci64*)memory;
 	for(int i=0;i<parser->array_size;i++){
@@ -205,21 +220,87 @@ _sci64* bytecode_gen64(_parser* parser, void* memory){
 	}
 }
 
+void one_read(_cpu* cpu,char reg,long value){
+	switch(reg){
+		case REG1:
+			cpu.regs.a = value;
+			break;
+		case REG2:
+			cpu.regs.b = value;
+			break;
+		case REG3:
+			cpu.regs.c = value;
+			break;
+		case REG4:
+			cpu.regs.d = value;
+			break;
+	}
+}
+void one_write(_cpu* cpu, _sci64* inst){
+	switch(inst->reg){
+		case REG1:
+			inst->value = cpu.regs.a;
+			break;
+		case REG2:
+			inst->value = cpu.regs.b;
+			break;
+		case REG3:
+			inst->value = cpu.regs.c;
+			break;
+		case REG4:
+			inst->value = cpu.regs.d;
+			break;
+	}
+}
 
+void one_cycle(_cpu* cpu){
+	_sci64* inst_space = cpu->memory;
+	int i=0;
+	do{
+		_sci64 inst = inst_space[i];
+		switch(inst.type){
+			case SM:
+				search_plan();
+				break;
+			case READ:
+				one_read(cpu,inst.reg,inst.value);
+				break;
+			case WRITE:
+				one_write(cpu,&inst_space[i]);
+				break;
+			case ADD:
+				break;
+			case SUB:
+				break;
+		}
+		i++;
+	}while(inst!=null);
+}
+
+void one_cpu(){
+	_cpu cpu;
+	cpu.memory = (_sci64*)malloc(sizeof(_sci64)*1000);
+	while(1){
+		_message messages[1];
+		int message_size = clip(&messages,1);
+		if(message_size>0){
+			if(messages[0].sender.name=="loader"){
+				char* asm_text = messages[0].talk;
+				_parser parser;
+        			parser.prev_instruction = null;
+        			parse_instruction(contents,&parser);
+				bytecode_gen64(&parser,&cpu);
+			}
+			
+		}
+	}
+}
 
 int main(int argc, char **argv){
-        if(argc<2){
-        printf("input file missed.\n");
-        return 0;
-        }
-        char *contents = open_file(argv[1]);
-
-        _parser parser;
-        parser.index = 0;
-        parser.prev_instruction = null;
-        parse_instruction(contents,&parser);
-	void *memory = (void*)malloc(sizeof(_sci64)*1000);
-	bytecode_gen64(&parser,memory);
+	
+	init_file_comm("seudo_cpu",1);
+        pthread_t t;
+        pthread_create(&t,NULL,accept_friend,NULL);
 
         printf("hello\n");
         return 0;

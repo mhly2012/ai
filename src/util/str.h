@@ -11,3 +11,4 @@ char i_to_c(int i);
 char * i_to_s(int num);
 int s_to_i(const char* s);
 int str_contains(const char* target, const char* comp);
+int str_cnt(const char* target, const char* comp);

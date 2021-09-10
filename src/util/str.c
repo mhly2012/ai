@@ -22,6 +22,23 @@ int str_contains(const char* target, const char* comp){
 	}
 	return -1;
 }
+int sub_equal(const char* target,const char* comp, int index,int comp_len){
+	for(int i=0;i<comp_len;i++){
+		if(target[index+i]!=comp[i]) return 0;
+	}
+	return 1;
+}
+int str_cnt(const char* target, const char* comp){
+	int cnt = 0;
+	int comp_len = str_len(comp);
+	for(int i=0;i<str_len(target)-comp_len;i++){
+		if(sub_equal(target,comp,i,comp_len)){
+			cnt++;
+			i = i+comp_len;
+		}
+	}
+	return cnt;
+}
 int str_len(const char* str){
 	int i=0;
 	while(str[i]!='\0') i++;

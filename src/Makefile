@@ -3,9 +3,10 @@ CC=cc
 NAME=picolisp
 CPU=seudo_cpu
 HTTP=http_server
-MONITOR=seudo_monitor
+MONITOR=term_gui
 EVENT_MANAGER=event_manager
 SPEAKER=seudo_speaker
+INT=interpreter
 BUILD_PATH=../build
 SRCS=$(NAME).c
 DEV_SRCS_DIR=device
@@ -64,6 +65,10 @@ http: $(COMM_OBJ_DIR)/$(HTTP).o $(OBJ_DIR)/$(OBJ)
 event: $(DEV_OBJ_DIR)/$(EVENT_MANAGER).o $(OBJ_DIR)/$(OBJ) ../comm_obj/file_comm.o ../util_obj/str.o
 	if test ! -d ../build; then mkdir ../build; fi;\
 	$(CC) $(DEBUGFLAGS) $^ -o $(BUILD_PATH)/$(EVENT_MANAGER);\
+	make clean;
+int: $(DEV_OBJ_DIR)/$(INT).o $(OBJ_DIR)/$(OBJ) ../comm_obj/file_comm.o ../util_obj/str.o
+	if test ! -d ../build; then mkdir ../build; fi;\
+	$(CC) $(DEBUGFLAGS) $^ -o $(BUILD_PATH)/$(INT);\
 	make clean;
 
 .PHONY:clean

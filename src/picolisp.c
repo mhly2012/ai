@@ -52,7 +52,6 @@ void pl_replace(_pl* root, int index, _pl* rep){
 	}while(quot!=0);
 }
 
-
 char* pl_str(_pl* root){
 	//_pl* tmp = root;
 	_pj* pj = &(_pj){root,0};
@@ -104,52 +103,11 @@ bool is_blank(char c){
 			return false;
 	}
 }
-char* next_token2(const char* string){
-	if(!is_blank(*string)){
-		char *tmp = (char*)malloc(sizeof(char)*20);
-		if(*string=='('){
-			tmp[0]='(';
-			tmp[1]='\0';
-			debug_print(tmp);
-			string++;
-			tmp = (char*)realloc(tmp,sizeof(char)*2);
-			return tmp;
-		}
-		else if(*string==')'){
-			tmp[0]=')';
-			tmp[1]='\0';
-			debug_print(tmp);
-			string++;
-			tmp = (char*)realloc(tmp,sizeof(char)*2);
-			return tmp;
-		}
-		else if(*string==null){
-			debug_print("string end");
-			free(tmp);
-			return null;
-		}
-		tmp[0] = *string;
-		string++;
-		int tmp_size = 1;
-		while(!is_blank(*string)){
-			if(*string==')') break;
-			tmp[tmp_size] = *string;
-			tmp_size++;
-			string++;		
-		}
-		tmp[tmp_size] = '\0';
-		debug_print(tmp);
-		tmp = (char*)realloc(tmp,sizeof(char)*(tmp_size+1));
-		return tmp;		
-	}
-	else{
-		string++;
-		return next_token2(string);	
-	}
-}
+
 char* next_token(char *string, _parser *parser){
 	if(!is_blank(string[parser->index])){
-		char *tmp = (char*)malloc(sizeof(char)*20);
+		int tok_ms = 20;
+		char *tmp = (char*)malloc(sizeof(char)*tok_ms);
 		if(string[parser->index]=='('){
 			tmp[0]='(';
 			tmp[1]='\0';
@@ -193,10 +151,13 @@ char* next_token(char *string, _parser *parser){
 			if(string[parser->index]==')') break;
 			tmp[tmp_size] = string[parser->index];
 			tmp_size++;
+			if(tmp_size==tok_ms){
+				tok_ms*=2;
+				tmp = (char*)realloc(tmp,sizeof(char)*tok_ms);
+			}
 			parser->index++;		
 		}
 		tmp[tmp_size] = '\0';
-		debug_print(tmp);
 		tmp = (char*)realloc(tmp,sizeof(char)*(tmp_size+1));
 		return tmp;		
 	}
@@ -205,6 +166,7 @@ char* next_token(char *string, _parser *parser){
 		return next_token(string,parser);	
 	}	
 }
+
 char* open_file(char *file_name){
 	FILE *file = fopen(file_name,"rb");
 	fseek(file,0,SEEK_END);
@@ -218,28 +180,6 @@ char* open_file(char *file_name){
 	return string;
 }
 
-/*
-_pl* parse_primitive(char* token){
-	_pl* pl = (_pl*)malloc(sizeof(_pl));
-	switch(token[0]){
-		case '\'':
-			break;
-		case '"':
-			break;
-		case '0':
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-			break;
-	}	
-}
-*/
 _pl* parse_element(char *string, _parser *parser, char* tok){
 	if(tok[0]=='('){
 		return parse_set(string,parser);	
@@ -314,9 +254,9 @@ _pl* parse_list(char *string,_parser *parser){
 //eval
 //TODO : char* -> const char*
 void parse_instruction(char *string,_parser *parser){
+	parser->index = 0;
 	char *tok = next_token(string, parser);
 	while(tok!=null){
-
 		_psi *instruction = (_psi*)malloc(sizeof(_psi));
 		instruction->prev = parser->prev_instruction;
 		parser->prev_instruction = instruction;
@@ -332,9 +272,7 @@ void parse_instruction(char *string,_parser *parser){
                         eval->data = tok;
                         instruction->function = eval;
                 }
-		
 		tok = next_token(string,parser);
-		
         }
 	int cnt=0;
 	_psi* inst = parser->prev_instruction;
@@ -353,24 +291,6 @@ void parse_instruction(char *string,_parser *parser){
 	}
 }
 
-int first_order_int_array(const char* string,int* buf,int size){
-	string++;
-	char *tok = next_token2(string);
-	for(int i=0;i<size;i++){
-		if(tok[0]=='('){
-			tok = next_token2(string);
-			i--;
-                }
-		else if(tok[0]==')'){
-			return i;
-		}
-		else{
-			//buf[i++] = s_to_i(tok);
-			tok = next_token2(string);
-		}
-	}
-	return size;
-}
 /*
 int main(int argc, char **argv){
 	if(argc<2){

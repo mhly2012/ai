@@ -7,5 +7,5 @@
 #include <fcntl.h>  // to call fcntl 
 
 #include "picolisp.h"
-#include "util/debug.h"
+//#include "util/debug.h"
 #include "comm/file_comm.h"

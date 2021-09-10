@@ -13,9 +13,11 @@
 #define null ((void*)0)
 #define MAXIMUM_KEYWORD_LENGTH 10
 #define DEBUG_MODE
-// index x -> 0 is fault, 1,2,3,..., 몫은 사이즈와 그 부분집합 내에서 인덱스를 담고, 나머지가 타겟 부분집합 자체의 인덱스를 가리킨다.
 
 typedef struct PicoList _pl;
+typedef struct PicoSymbolicInstruction _psi;
+
+// 1. PL 조작함수에서 depth 구조 처리하기 위한 구조체
 typedef struct PicoJob{
 	_pl* pl;
 	int index;
@@ -25,9 +27,10 @@ typedef struct PicoStack {
 	_pj* job;
 	_ps* base;
 } _ps;
-typedef struct PicoList _pl;
-typedef struct PicoSymbolicInstruction _psi;
-typedef struct Chain _chain;
+// 1. depth 구조 처리 구조체 끝
+				
+
+/*
 typedef union PrimitiveData{
         int _int;
         char* string;
@@ -37,10 +40,16 @@ typedef union PrimitiveData{
         float _float;
         float* _float_array;
 } _prim;
+*/
+
+// 2. PL parsing할 때 인스트럭션 정리하기 위한 구조체
+typedef struct Chain _chain;
 typedef struct Chain{
 	_pl* element;
 	_chain* next;
 } _chain;
+// 2. 인스트럭션 정리 구조체 끝
+
 typedef struct PicoList{
         char* type;  // name: primitive, set
         union{
@@ -55,6 +64,7 @@ typedef struct PicoSymbolicInstruction{
         _psi* prev;
         _pl* function;
 } _psi;
+
 typedef struct Parser{
         int index;
         _psi* prev_instruction;
@@ -63,7 +73,11 @@ typedef struct Parser{
 } _parser;
 // TODO : char* -> const char*
 void parse_instruction(char *string,_parser *parser);
-char* open_file(char *file_name);
+//char* open_file(char *file_name);
+//int first_order_int_array(const char *,int*buf,int size);
+
+// 3. PL 조작함수들
 _pl* pl_get(_pl* root,int index);
 void pl_replace(_pl* root, int index, _pl* rep);
 char* pl_str(_pl* root);
+// 3. PL 조작함수들 끝

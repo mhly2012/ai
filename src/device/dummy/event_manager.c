@@ -32,11 +32,7 @@ typedef struct tagBITMAPINFOHEADER{
 }BITMAPINFOHEADER;
 #pragma pack(pop)
 
-static int monitor_w = 60;
-static int monitor_h = 20;
 
-// 비트맵 -> raw데이터로 읽기
-/*
 unsigned char* load_bitmap_data(char* filename){
 	FILE* file;
 	BITMAPINFOHEADER bih;
@@ -83,52 +79,30 @@ unsigned char* load_bitmap_data(char* filename){
 	image = tmp;
 	return image;
 }
-*/
-typedef struct BGMHeader{
-	char type;
-	int width;
-	int height;
-}_bgm_header;
 void save_data(const char* name,const char* data){
 	data++;
 	FILE* file;
 	char* tmp = str_sum("./data/",name);
 	file =	fopen(tmp,"wb");
-	if(file==NULL) {
-		free(tmp);
-		return ;
-	}
-	// 헤더 추가
-	_bgm_header head = {1,monitor_w,monitor_h};
-	fwrite(&head,sizeof(head),1,file);
-	fwrite(data,monitor_w*monitor_h*4,1,file);
+	if(file==NULL) return ;
+	fwrite(data,20*10*4,1,file);
 	fclose(file);
 	free(tmp);
 	return;
 }
 char* load_data(const char* name){
 	FILE* file;
+	char* data = (char*)malloc(20*10*4);
 	char* tmp = str_sum("./data/",name);
 	file = fopen(tmp,"rb");
 	if(file==NULL) {
 		printf("load file fail\n");
-		free(tmp);
 		return NULL;
 	}
-	_bgm_header head;
-	int hsize = fread(&head,sizeof(head),1,file);
-	char* data = (char*)malloc((head.width*head.height*4)+1);
-	int size = fread(data,1,head.width*head.height*4,file);
+	int size = fread(data,20*10*4,1,file);
 	fclose(file);
 	free(tmp);
-	data[size] = '\0';
-	return data;
-}
-
-void send_instant(char* name,char* contents){
-	request_friend(name);
-	info(contents,name);
-	remove_friend(name);
+	return (char*)data;
 }
 
 //static char* monitor_str = "(sof 43)\n(monitor 20 10)";
@@ -142,21 +116,35 @@ void save(char* name){
 		parser.prev_instruction = null;
 		parse_instruction(save_str, &parser);
 		_pl* sizepl = &(_pl){"primitive","0"};
+		//_pl* datapl = &(_pl){"primitive","asdfsdfsdfsdfasdfasdfasdfasdfasdfadfasdfadsfasdf"};
+		//PLreplace(parser.instruction_array[1],2,datapl);
 		char* str;
 		str = pl_str(parser.instruction_array[1]);
+		//PLstr(parser.instruction_array[1],str);
 		char* its = i_to_s(str_len(str));
 		sizepl->data = its;
 		pl_replace(parser.instruction_array[0],2,sizepl);
+		//PLreplace(parser.instruction_array[0],2,sizepl);
 		char* header;
 		header = pl_str(parser.instruction_array[0]);
+		//PLstr(parser.instruction_array[0],header);
 		char* tmp = str_sum(header,"\n");
 		char* sstr = str_sum(tmp,str);
 		request_friend("term_gui");
+		//sleep(1);
 		info(sstr,"term_gui");
+		//sleep(1);
 		_message messages[1];
 		int count =0;
+
+		/*while(count<1) {
+			info("\n","term_gui");
+			count = clip(&messages,1);
+		}*/
 		count = clip_blocking(&messages,1);
+
 		remove_friend("term_gui");
+
 		if(count>0){
 			save_data("tmp.bgm",messages[0].talk);
 		}	
@@ -170,8 +158,6 @@ void save(char* name){
 	}
 }
 
-// bitmap데이터 모니터로 전송하기 
-/*
 void load_bitmap(char* name){
 	char* bgm_data = load_bitmap_data(name);
 	if(bgm_data==NULL){
@@ -184,59 +170,39 @@ void load_bitmap(char* name){
 	_pl* sizepl = &(_pl){"primitive","0"};
 	_pl* datapl = &(_pl){"primitive",bgm_data};
 	pl_replace(parser.instruction_array[1],2,datapl);
+	//PLreplace(parser.instruction_array[1],2,datapl);
 	char* str;
 	str = pl_str(parser.instruction_array[1]);
+	//PLstr(parser.instruction_array[1],str);
 	char* its = i_to_s(str_len(str));
 	sizepl->data = its;
 	pl_replace(parser.instruction_array[0],2,sizepl);
+	//PLreplace(parser.instruction_array[0],2,sizepl);
 	char* header;
 	header = pl_str(parser.instruction_array[0]);
+	//PLstr(parser.instruction_array[0],header);
 	char* tmp = str_sum(header,"\n");
 	char* sstr = str_sum(tmp,str);
-	send_instant("term_gui",sstr);
+	request_friend("term_gui");
+	info(sstr,"term_gui");
+	remove_friend("term_gui");
 	free(tmp);
 	free(str);
 	free(sstr);
 	free(bgm_data);
 	free(its);
 }
-*/
+
 
 void exec_command(char* command){
 	if(str_cmp(command,"(command-list)")){
 		printf("(bgm)\n(cake)\n(signature)\n(gifts)\n(number)\n(clear)\n(quit)\n");	
 	}else if(str_cmp(command,"(bgm)")){
+		
 		char* bgm_data = load_data("birth.bgm");
-		if(bgm_data==NULL){
-			return;
-		}
-		_parser parser;
-		parser.index =0;
-		parser.prev_instruction = null;
-		parse_instruction(load_str, &parser);
-		_pl* sizepl = &(_pl){"primitive","0"};
-		_pl* datapl = &(_pl){"primitive",bgm_data};
-		pl_replace(parser.instruction_array[1],2,datapl);
-		char* str;
-		str = pl_str(parser.instruction_array[1]);
-		char* its = i_to_s(str_len(str));
-		sizepl->data = its;
-		pl_replace(parser.instruction_array[0],2,sizepl);
-		char* header;
-		header = pl_str(parser.instruction_array[0]);
-		char* tmp = str_sum(header,"\n");
-		char* sstr = str_sum(tmp,str);
-		send_instant("term_gui",sstr);
-		free(tmp);
-		free(str);
-		free(sstr);
-		free(bgm_data);
-		free(its);
-	}else if(str_cmp(command,"(cake)")){
-		char* bgm_data = load_data("cake.bgm");
-		if(bgm_data==NULL){
-			return;
-		}
+if(bgm_data==NULL){
+		return;
+	}
 		_parser parser;
 	parser.index =0;
 	parser.prev_instruction = null;
@@ -244,16 +210,56 @@ void exec_command(char* command){
 	_pl* sizepl = &(_pl){"primitive","0"};
 	_pl* datapl = &(_pl){"primitive",bgm_data};
 	pl_replace(parser.instruction_array[1],2,datapl);
+	//PLreplace(parser.instruction_array[1],2,datapl);
 	char* str;
 	str = pl_str(parser.instruction_array[1]);
+	//PLstr(parser.instruction_array[1],str);
 	char* its = i_to_s(str_len(str));
 	sizepl->data = its;
 	pl_replace(parser.instruction_array[0],2,sizepl);
+	//PLreplace(parser.instruction_array[0],2,sizepl);
 	char* header;
 	header = pl_str(parser.instruction_array[0]);
+	//PLstr(parser.instruction_array[0],header);
 	char* tmp = str_sum(header,"\n");
 	char* sstr = str_sum(tmp,str);
-	send_instant("term_gui",sstr);
+	request_friend("term_gui");
+	info(sstr,"term_gui");
+	remove_friend("term_gui");
+	free(tmp);
+	free(str);
+	free(sstr);
+	free(bgm_data);
+	free(its);
+
+	}else if(str_cmp(command,"(cake)")){
+char* bgm_data = load_data("cake.bgm");
+if(bgm_data==NULL){
+		return;
+	}
+		_parser parser;
+	parser.index =0;
+	parser.prev_instruction = null;
+	parse_instruction(load_str, &parser);
+	_pl* sizepl = &(_pl){"primitive","0"};
+	_pl* datapl = &(_pl){"primitive",bgm_data};
+	pl_replace(parser.instruction_array[1],2,datapl);
+	//PLreplace(parser.instruction_array[1],2,datapl);
+	char* str;
+	str = pl_str(parser.instruction_array[1]);
+	//PLstr(parser.instruction_array[1],str);
+	char* its = i_to_s(str_len(str));
+	sizepl->data = its;
+	pl_replace(parser.instruction_array[0],2,sizepl);
+	//PLreplace(parser.instruction_array[0],2,sizepl);
+	char* header;
+	header = pl_str(parser.instruction_array[0]);
+	//PLstr(parser.instruction_array[0],header);
+	char* tmp = str_sum(header,"\n");
+	char* sstr = str_sum(tmp,str);
+request_friend("term_gui");
+	info(sstr,"term_gui");
+	remove_friend("term_gui");
 	free(tmp);
 	free(str);
 	free(sstr);
@@ -271,49 +277,26 @@ if(bgm_data==NULL){
 	_pl* sizepl = &(_pl){"primitive","0"};
 	_pl* datapl = &(_pl){"primitive",bgm_data};
 	pl_replace(parser.instruction_array[1],2,datapl);
+	//PLreplace(parser.instruction_array[1],2,datapl);
 	char* str;
 	str = pl_str(parser.instruction_array[1]);
+	//PLstr(parser.instruction_array[1],str);
 	char* its = i_to_s(str_len(str));
 	sizepl->data = its;
 	pl_replace(parser.instruction_array[0],2,sizepl);
+	//PLreplace(parser.instruction_array[0],2,sizepl);
 	char* header;
-	header = pl_str(parser.instruction_array[0]);
+	//PLstr(parser.instruction_array[0],header);
 	char* tmp = str_sum(header,"\n");
 	char* sstr = str_sum(tmp,str);
-	send_instant("term_gui",sstr);
+request_friend("term_gui");
+	info(sstr,"term_gui");
+	remove_friend("term_gui");
 	free(str);
 	free(tmp);
 	free(sstr);
 	free(its);
 	free(bgm_data);
-
-	}else if(str_cmp(command,"(dog)")){
-	char* bgm_data = load_data("dog.bgm");
-	if(bgm_data==NULL){
-		return;
-	}
-	_parser parser;
-	parser.index =0;
-	parser.prev_instruction = null;
-	parse_instruction(load_str, &parser);
-	_pl* sizepl = &(_pl){"primitive","0"};
-	_pl* datapl = &(_pl){"primitive",bgm_data};
-	pl_replace(parser.instruction_array[1],2,datapl);
-	char* str;
-	str = pl_str(parser.instruction_array[1]);
-	char* its = i_to_s(str_len(str));
-	sizepl->data = its;
-	pl_replace(parser.instruction_array[0],2,sizepl);
-	char* header;
-	header = pl_str(parser.instruction_array[0]);
-	char* tmp = str_sum(header,"\n");
-	char* sstr = str_sum(tmp,str);
-	send_instant("term_gui",sstr);
-	free(str);
-	free(tmp);
-	free(sstr);
-	free(its);
-		free(bgm_data);
 
 	}else if(str_cmp(command,"(gifts)")){
 		printf("not ready...some years later...:(\n");
@@ -330,16 +313,22 @@ if(bgm_data==NULL){
 	_pl* sizepl = &(_pl){"primitive","0"};
 	_pl* datapl = &(_pl){"primitive",bgm_data};
 	pl_replace(parser.instruction_array[1],2,datapl);
+	//PLreplace(parser.instruction_array[1],2,datapl);
 	char* str;
 	str = pl_str(parser.instruction_array[1]);
+	//PLstr(parser.instruction_array[1],str);
 	char* its = i_to_s(str_len(str));
 	sizepl->data = its;
 	pl_replace(parser.instruction_array[0],2,sizepl);
+	//PLreplace(parser.instruction_array[0],2,sizepl);
 	char* header;
 	header = pl_str(parser.instruction_array[0]);
+	//PLstr(parser.instruction_array[0],header);
 	char* tmp = str_sum(header,"\n");
 	char* sstr = str_sum(tmp,str);
-	send_instant("term_gui",sstr);
+	request_friend("term_gui");
+	info(sstr,"term_gui");
+	remove_friend("term_gui");
 	free(tmp);
 	free(str);
 	free(sstr);
@@ -359,16 +348,22 @@ if(bgm_data==NULL){
 	_pl* sizepl = &(_pl){"primitive","0"};
 	_pl* datapl = &(_pl){"primitive",bgm_data};
 	pl_replace(parser.instruction_array[1],2,datapl);
+	//PLreplace(parser.instruction_array[1],2,datapl);
 	char* str;
 	str = pl_str(parser.instruction_array[1]);
+	//PLstr(parser.instruction_array[1],str);
 	char* its = i_to_s(str_len(str));
 	sizepl->data = its;
 	pl_replace(parser.instruction_array[0],2,sizepl);
+	//PLreplace(parser.instruction_array[0],2,sizepl);
 	char* header;
 	header = pl_str(parser.instruction_array[0]);
+	//PLstr(parser.instruction_array[0],header);
 	char* tmp = str_sum(header,"\n");
 	char* sstr = str_sum(tmp,str);
-	send_instant("term_gui",sstr);
+	request_friend("term_gui");
+	info(sstr,"term_gui");
+	remove_friend("term_gui");
 	free(tmp);
 	free(str);
 	free(sstr);
@@ -388,16 +383,22 @@ if(bgm_data==NULL){
 	_pl* sizepl = &(_pl){"primitive","0"};
 	_pl* datapl = &(_pl){"primitive",bgm_data};
 	pl_replace(parser.instruction_array[1],2,datapl);
+	//PLreplace(parser.instruction_array[1],2,datapl);
 	char* str;
 	str = pl_str(parser.instruction_array[1]);
+	//PLstr(parser.instruction_array[1],str);
 	char* its = i_to_s(str_len(str));
 	sizepl->data = its;
 	pl_replace(parser.instruction_array[0],2,sizepl);
+	//PLreplace(parser.instruction_array[0],2,sizepl);
 	char* header;
 	header = pl_str(parser.instruction_array[0]);
+	//PLstr(parser.instruction_array[0],header);
 	char* tmp = str_sum(header,"\n");
 	char* sstr = str_sum(tmp,str);
-	send_instant("term_gui",sstr);
+	request_friend("term_gui");
+	info(sstr,"term_gui");
+	remove_friend("term_gui");
 	free(tmp);
 	free(str);
 	free(sstr);
@@ -415,23 +416,30 @@ char* bgm_data = load_data("tmp.bgm");
 	_pl* sizepl = &(_pl){"primitive","0"};
 	_pl* datapl = &(_pl){"primitive",bgm_data};
 	pl_replace(parser.instruction_array[1],2,datapl);
+	//PLreplace(parser.instruction_array[1],2,datapl);
 	char* str;
 	str = pl_str(parser.instruction_array[1]);
+	//PLstr(parser.instruction_array[1],str);
 	char* its = i_to_s(str_len(str));
 	sizepl->data =its;
 	pl_replace(parser.instruction_array[0],2,sizepl);
+	//PLreplace(parser.instruction_array[0],2,sizepl);
 	char* header;
 	header = pl_str(parser.instruction_array[0]);
+	//PLstr(parser.instruction_array[0],header);
 	char* tmp = str_sum(header,"\n");
 	char* sstr = str_sum(tmp,str);
-	send_instant("term_gui",sstr);
+	request_friend("term_gui");
+	//sleep(1);
+	info(sstr,"term_gui");
+	//sleep(1);
+	remove_friend("term_gui");
 	free(its);
 	free(bgm_data);
 	free(str);
 	free(sstr);
 	free(tmp);
 	}
-	/*
 	else if(str_contains(command,"(load-bitmap")>-1){
 		_parser parser;
 	parser.index =0;
@@ -439,10 +447,10 @@ char* bgm_data = load_data("tmp.bgm");
 	parse_instruction(command, &parser);
 	_pl* pl;
 	pl = pl_get(parser.instruction_array[0],2);
+	//PLget(parser.instruction_array[0],2,pl);
 	int con = str_contains(pl->data,".bmp");
 	if(con+4==str_len(pl->data)) load_bitmap(pl->data);
 	}
-	*/
 	else if(str_cmp(command,"(quit)")){
 		exit(0);
 	}else{
@@ -454,7 +462,7 @@ char* bgm_data = load_data("tmp.bgm");
 
 int main(){
 	init_file_comm("event_manager",1);
-	//request_friend("seudo_speaker");
+	//request_friend("term_gui");
 	//send(setupevent, "seudo_monitor");
 	
 	printf("type (command-list)\n");
@@ -462,7 +470,7 @@ int main(){
 		printf(">>>");
 		fflush(stdout);
 		char input[30];
-		char * res = fgets(input,30,stdin);
+		char * res = fgets(input,4000,stdin);
 		if(res!=NULL){
 			int size = str_len(input);
 			input[size-1] = '\0';
