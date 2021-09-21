@@ -4,6 +4,7 @@
 int str_cmp(const char* str1, const char* str2);
 int str_len(const char* str);
 void* mem_cpy(void* dst, const void* src, size_t n);
+void* mem_set(void* dst, int val, size_t len);
 void* mem_move(void* dst, const void* src, size_t n);
 char* str_sum(const char* str1,const char* str2);
 int c_to_i(char c);

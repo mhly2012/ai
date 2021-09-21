@@ -62,6 +62,13 @@ void* mem_cpy(void* dst, const void* src, size_t n){
 	while(n--) *d++ = *s++;
 	return dst;
 }
+void* mem_set(void* dst, int val, size_t len){
+	unsigned char* ptr = dst;
+	while(len-->0){
+		*ptr++=val;
+	}
+	return dst;
+}
 char* str_sum(const char* str1,const char* str2){
 	int size1 = str_len(str1);
 	int size2 = str_len(str2);

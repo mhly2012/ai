@@ -3,6 +3,7 @@
 //#include <stdio.h>
 #include <stdlib.h> //to call malloc, free
 #include <string.h> //to call strcpy, memset
+#include <err.h>  //to call err
 
 #include "util/debug.h"
 #include "util/str.h"

@@ -3,12 +3,17 @@
 #define LISTENQ 10
 #define DISCONNECT "(disconnect)"
 static _friend *friends=NULL;
+//static int f_cnt;
 static int max_friends;
 static char *my_name;
-static int f_cnt;
-static char* prefix;
+//static _message* queue;
+//static int q_index = 0;
+//static int max_queue;
 
+static char* prefix;
+static int test_flag = 0;
 char* parse_request(int connfd){
+	
 	ssize_t rret;
 	char buf_c;
 	int buf_max = 100;
@@ -16,16 +21,20 @@ char* parse_request(int connfd){
 	size_t bufcur=0,prevcur=0;
 	size_t size;
 	while(1){
-		while(((rret=read(connfd,&buf_c,sizeof(buf_c)))==-1)&&errno==EINTR);
+		while(((rret=read(connfd,&buf_c,sizeof(buf_c)))==-1)&&errno==EINTR){
+		//printf("test\n");
+		//if(test_flag) printf("%c\n",buf_c);
+}
+		//printf("test\n");
+
+		//if(test_flag) printf("%c\n",buf_c);
 
 		if((rret==0)||(errno==ECONNRESET)) {
+			//printf("disconnect occur\n");
+			//connect_flag= 0;
 			return DISCONNECT;
 		}
-		if(errno==EAGAIN) {
-			//err(EXIT_FAILURE,"reading sof");
-			//printf("reading sof\n");
-			return NULL;
-		}
+		if(errno==EAGAIN) return NULL;
 		buf[bufcur] = buf_c;
 		bufcur++;
 		if(bufcur==buf_max) {
@@ -54,9 +63,12 @@ char* parse_request(int connfd){
 		}
 	}
 	while(1){
-                while(((rret=read(connfd,buf,size))==-1)&&errno==EINTR);
+                while(((rret=read(connfd,buf,size))==-1)&&errno==EINTR){
+			//if(test_flag) printf("%s\n",buf);
+		}
+		//if(test_flag) printf("%s\n",buf);
 		if(errno==EAGAIN) {
-			//err(EXIT_FAILURE,"parse main pl");
+			printf("contents read fail\n");
 			free(buf);
 			return NULL;
 		}
@@ -77,7 +89,81 @@ char* parse_request(int connfd){
 	printf("something wrong\n");
 	return NULL;
 }
+void* accept_friend_non_block(void* args){
+	if(my_name==NULL) {
+		printf("name empty");
+		return NULL;
+	}
+	char* fname = str_sum(prefix,my_name);
+	unlink(fname);
+	struct sockaddr_un serveraddr;
+	int connfd;
+        int listenfd, optval = 1;
+        listenfd = socket(PF_LOCAL, SOCK_STREAM,0);
+	
+	if(setsockopt(listenfd, SOL_SOCKET,SO_REUSEADDR,(const void*)&optval,sizeof(int))<0) {
+		printf("setsockopt fail\n");
+		return NULL;
+	}
 
+        memset(&serveraddr,0,sizeof(serveraddr));
+        serveraddr.sun_family=AF_LOCAL;
+	mem_move(serveraddr.sun_path,fname,str_len(fname)+1);
+	free(fname);
+        if(bind(listenfd, (struct sockaddr*)&serveraddr,sizeof(serveraddr))<0){
+		debug_print("bind fail\n");
+                return NULL;
+	}
+        if(listen(listenfd,LISTENQ)<0) {
+		debug_print("listen fail\n");
+		return NULL;
+	}
+
+	while(1){
+                connfd = accept(listenfd,NULL,NULL);
+
+		if(f_cnt>=max_friends) {
+			printf("fmax exceed!\n");
+			write(connfd,"(sof 17)\n(error full-list)\0",27);
+			close(connfd);
+			continue;
+		}
+		//fcntl(connfd,F_SETFL, O_NONBLOCK);
+		char* req = parse_request(connfd);
+		if(req!=NULL){
+
+		_parser parser;
+		parser.index = 0;
+		parser.prev_instruction = null;
+		parse_instruction(req,&parser);
+		_pl* pl;
+		pl = pl_get(parser.instruction_array[0],1);
+
+		if(str_cmp(pl->data,"name")){
+			pl = pl_get(parser.instruction_array[0],2);
+			char * name = pl->data;
+			//TODO : add friend
+			//fcntl(connfd,F_SETFL, O_NONBLOCK);
+
+			friends[f_cnt].connfd = connfd;
+			friends[f_cnt].name = name;
+			f_cnt++;
+			write(connfd,"(sof 9)\n(success)\0",18);
+			fcntl((connfd),F_SETFL, O_NONBLOCK);
+		}
+		else{
+			printf("no name\n");
+			close(connfd);
+		}
+		free(req);}
+		else{
+			printf("req==null\n");
+			close(connfd);
+		}
+		//close(connfd);
+        }
+	return NULL;
+}
 void* accept_friend(void* args){
 	if(my_name==NULL) {
 		printf("name empty");
@@ -117,68 +203,38 @@ void* accept_friend(void* args){
 			close(connfd);
 			continue;
 		}
-
-		// 서버의 pid를 파일에 등록하여 클라이언트에서 조회한 후 kill을 보낼 수 있게 함
-		pid_t pid = getpid(); 
-		
+		//fcntl(connfd,F_SETFL, O_NONBLOCK);
 		char* req = parse_request(connfd);
-
 		if(req!=NULL){
-			_parser parser;
-			parser.index = 0;
-			parser.prev_instruction = null;
-			parse_instruction(req,&parser);
-			_pl* pl;
-			pl = pl_get(parser.instruction_array[0],1);
 
-			if(str_cmp(pl->data,"name")){
-				pl = pl_get(parser.instruction_array[0],2);
-				char * name = pl->data;
-				//TODO : add friend
+		_parser parser;
+		parser.index = 0;
+		parser.prev_instruction = null;
+		parse_instruction(req,&parser);
+		_pl* pl;
+		pl = pl_get(parser.instruction_array[0],1);
 
-				friends[f_cnt].connfd = connfd;
-				friends[f_cnt].name = name;
-				friends[f_cnt].pid = s_to_i(pl_get(parser.instruction_array[1],2)->data);
-				f_cnt++;
+		if(str_cmp(pl->data,"name")){
+			pl = pl_get(parser.instruction_array[0],2);
+			char * name = pl->data;
+			//TODO : add friend
+			//fcntl(connfd,F_SETFL, O_NONBLOCK);
 
-				char * suc_res_str = "(sof $s)\n(success)\n(pid $c)";
-				_parser srs_parser;
-				srs_parser.index = 0;
-				srs_parser.prev_instruction = null;
-				parse_instruction(suc_res_str,&srs_parser);
-				pid_t pid = getpid();
-				_pl* pid_pl = &(_pl){"primitive",i_to_s(pid)};
-				pl_replace(srs_parser.instruction_array[2],2,pid_pl);
-				char* str1 = pl_str(srs_parser.instruction_array[1]);
-				char* str2 = pl_str(srs_parser.instruction_array[2]);
-				suc_res_str = str_sum(str1,str2);
-				//free(str1);	
-				//free(str2);
-				char* its = i_to_s(str_len(suc_res_str));
-				_pl* pl2 = &(_pl){"primitive",its};
-				pl_replace(srs_parser.instruction_array[0],2,pl2);
-				char * header = "";
-				header = pl_str(srs_parser.instruction_array[0]);
-				char *ss2 = str_sum(header,"\n");
-				char *ss3 = str_sum(ss2,suc_res_str);
-				//free(suc_res_str);
-				free(ss2);
-				suc_res_str = ss3;
-				write(connfd,suc_res_str,str_len(suc_res_str)+1);
-				//write(connfd,"(sof 9)\n(success)\0",18);
-				int ori = fcntl(connfd,F_GETFL);
-				//fcntl((connfd),F_SETFL, ori|O_NONBLOCK);
-			}
-			else{
-				printf("no name\n");
-				close(connfd);
-			}
-			free(req);}
+			friends[f_cnt].connfd = connfd;
+			friends[f_cnt].name = name;
+			f_cnt++;
+			write(connfd,"(sof 9)\n(success)\0",18);
+			//non_block_mode();
+		}
+		else{
+			printf("no name\n");
+			close(connfd);
+		}
+		free(req);}
 		else{
 			printf("req==null\n");
 			close(connfd);
 		}
-		
 		//close(connfd);
         }
 	return NULL;
@@ -188,81 +244,100 @@ void info(const char* message, const char* name){
 	for(int i=0;i<f_cnt;i++){
 		if(str_cmp(friends[i].name,name)){
 			write((friends[i].connfd),message,str_len(message)+1);
-			kill(friends[i].pid,SIGURG);
-
 			return;
 		}
 	}
 }
 
-
-void clip_blocking(const char* name,_message* messages){
+int clip_blocking(_message* messages,int length){
 	int res_size = 0;
 	for(int i=0;i<f_cnt;i++){
-		if(!str_cmp(friends[i].name,name)) continue;
 		//printf("block fd:%d\n",(friends[i].connfd));
-		int ori = fcntl((friends[i].connfd),F_GETFL);
-		int fre =  ori&~(O_NONBLOCK);
-		fcntl((friends[i].connfd),F_SETFL, fre);
+		int opts = fcntl((friends[i].connfd),F_GETFL);
+		opts &=~(O_NONBLOCK);
+		fcntl((friends[i].connfd),F_SETFL, opts);
 		char* req = parse_request((friends[i].connfd));
 		
-		if(req==DISCONNECT){
-			//close(*(friends[i].connfd));
-			friends[i].connfd=NULL;
-			friends[i].name = NULL;
-			if(i+1<f_cnt){
-				mem_move(&friends[i],&friends[i+1],f_cnt-i);
+		while(req!=NULL){
+				if(req==DISCONNECT){
+				//close(*(friends[i].connfd));
+				friends[i].connfd=NULL;
+				friends[i].name = NULL;
+				f_cnt--;	
+				req = NULL;
+				continue;
 			}
-			i--;
-			f_cnt--;	
-			req = NULL;
-			continue;
+			messages[res_size].talk = req;
+			messages[res_size].sender = &friends[i];
+			res_size++;
+			if(res_size==length) return res_size;
+			req = parse_request((friends[i].connfd));
 		}
-		messages[res_size].talk = req;
-		messages[res_size].sender = &friends[i];
-		fcntl((friends[i].connfd),F_SETFL, ori);
 	}
+	return res_size;
+}
+void non_block_mode(){
+for(int i=0;i<f_cnt;i++){
+		fcntl((friends[i].connfd),F_SETFL, O_NONBLOCK);
+}
 }
 
 int clip(_message* messages, int length){
 	int res_size = 0;
 	for(int i=0;i<f_cnt;i++){
-		char* req = parse_request(friends[i].connfd);
+		//if(i==0) {
+		//	printf("sss\n");
+		//	test_flag = 1;
+		//}
+		char* req = parse_request((friends[i].connfd));
+		//if(i==0) {
+		//	printf("??\n");
+		//	test_flag = 0;
+		//}
+		//while(req!=NULL){
 		if(req!=NULL){
 			if(req==DISCONNECT){
+				//close(*(friends[i].connfd));
 				friends[i].connfd=NULL;
 				friends[i].name = NULL;
-				if(i+1<f_cnt){
-					mem_move(&friends[i],&friends[i+1],f_cnt-i);
-				}
-				i--;
 				f_cnt--;	
+				//req = NULL;
+				//continue;
 			}else{
 				messages[res_size].talk = req;
 				messages[res_size].sender = &friends[i];
 				res_size++;
+				//req = parse_request((friends[i].connfd));
 			}
-		}
-		else{
-			
-		//	err(EXIT_FAILURE,"clip");
+			/*_parser parser;
+			parser.index = 0;
+			parser.prev_instruction = null;
+			parse_instruction(req,&parser);
+			_pl* pl;
+			pl = pl_get(parser.instruction_array[0],1);
+			//PLget(parser.instruction_array[0],1,pl);
+			//TODO : message order
+			if(pl->data=="contents"){
+				pl = pl_get(parser.instruction_array[0],2);
+				//PLget(parser.instruction_array[0],2,pl);
+				messages[res_size].talk = pl->data;
+				messages[res_size].friend = friends[i];
+				if(res_size>=length) return res_size;
+				res_size++;
+			}
+			req = parse_request(friends[i].connfd);*/
 		}
 	}
 	return res_size;
 }
 
 void remove_friend(const char* name){
-int index = -1;
 for(int i=0;i<f_cnt;i++){
 		if(str_cmp(friends[i].name,name)){
-				index = i;
+				//printf("removing fd:%d\n",(friends[i].connfd));
 				close((friends[i].connfd));
 				friends[i].connfd=NULL;
 				friends[i].name = NULL;
-				if(i+1<f_cnt){
-					mem_move(&friends[i],&friends[i+1],f_cnt-i);
-				}
-				i--;
 				f_cnt--;	
 			return;
 		}
@@ -284,35 +359,29 @@ int request_friend(const char* name){
 		return -1;
 	}
 	//TODO : message formating
-	char * reqstr = "(sof $s)\n(name $n)\n(pid $c)";
+	char * reqstr = "(sof $s)\n(name $n)";
 	_parser parser;
 	parser.index = 0;
 	parser.prev_instruction = null;
 	parse_instruction(reqstr,&parser);
 	_pl* pl = &(_pl){"primitive",my_name};
 	pl_replace(parser.instruction_array[1],2,pl);
-	pid_t pid = getpid();
-	_pl* pid_pl = &(_pl){"primitive",i_to_s(pid)};
-	pl_replace(parser.instruction_array[2],2,pid_pl);
-	char* str1 = pl_str(parser.instruction_array[1]);
-	char* str2 = pl_str(parser.instruction_array[2]);
-	reqstr = str_sum(str1,str2);
-	//free(str1);	
-	//free(str2);
+	//PLreplace(parser.instruction_array[1],2,pl)
+	reqstr = "";
+	reqstr = pl_str(parser.instruction_array[1]);
+	//PLstr(parser.instruction_array[1],reqstr);
 	char* its = i_to_s(str_len(reqstr));
 	_pl* pl2 = &(_pl){"primitive",its};
 	pl_replace(parser.instruction_array[0],2,pl2);
+	//PLreplace(parser.instruction_array[0],2,pl2)
 	char * header = "";
 	header = pl_str(parser.instruction_array[0]);
+	//PLstr(parser.instruction_array[0],header);
 	char *ss2 = str_sum(header,"\n");
 	char *ss3 = str_sum(ss2,reqstr);
-	//free(reqstr);
 	free(ss2);
 	reqstr = ss3;
-
 	write(connfd,reqstr,str_len(reqstr)+1);
-	// 친구요청을 보내고 응답메시지를 기다림
-	// 한번만 5초간 메시지를 기다림
 	char* req = parse_request(connfd);
 	_parser parser2;
 	parser2.index = 0;
@@ -320,14 +389,11 @@ int request_friend(const char* name){
 	parse_instruction(req,&parser2);
 	_pl* pl3;
 	pl3 = pl_get(parser2.instruction_array[0],1);
+	//PLget(parser2.instruction_array[0],1,pl3)
 	if(str_cmp(pl3->data,"success")){
-		// 연결 성공
-		_pl* pid_pl = pl_get(parser2.instruction_array[1],1);
-		friends[f_cnt].pid = s_to_i(pid_pl->data);
+		//printf("comm fd:%d\n",connfd);
 		friends[f_cnt].connfd = connfd;
 		friends[f_cnt].name = name;
-		int ori = fcntl(connfd,F_GETFL);
-		//fcntl(connfd,F_SETFL,ori|O_NONBLOCK);
 		f_cnt++;
 		free(its);
 		free(ss);
@@ -335,16 +401,14 @@ int request_friend(const char* name){
 		return 1;
 	}
 	else{
-		// 실패
 		close(connfd);
 		printf(pl3->data);
 		printf("\n");
-		printf("friend fail\n");
+	       	printf("friend fail\n");
 	}
 	free(its);
 	free(ss);
 	free(ss3);
-
 	return 0;
 }
 
@@ -358,20 +422,11 @@ int init_file_comm(const char* name,int max_friend_cnt){
 	}
 	max_friends = max_friends+max_friend_cnt;
 	if(friends!=NULL){
-		friends = (_friend*)realloc(friends,sizeof(_friend)*max_friends);
-		
+	friends = (_friend*)realloc(friends,sizeof(_friend)*max_friends);
 	}else{
-		friends = (_friend*)malloc(sizeof(_friend)*max_friends);
+friends = (_friend*)malloc(sizeof(_friend)*max_friends);
+
 	}
 	my_name = name;
 	return 1;
-}
-void kill_handler(int signum){
-//	printf("%d\n",signum);
-//	pthread_mutex_lock(&message_lock);
-	
-	pthread_cond_signal(&message_cond);
-
-//	pthread_cond_wait(&message_cond,&message_lock);
-//	pthread_mutex_unlock(&message_lock);
 }

@@ -2,7 +2,6 @@
 #include <termios.h>
 //#include <unistd.h>
 //#include <sys/ioctl.h>
-#include <pthread.h> 
 #include <signal.h> //to handle ctrl-c interrupt
 #include <fcntl.h> //to call fcntl 
 

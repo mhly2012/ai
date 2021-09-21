@@ -63,6 +63,14 @@ char* load_data(const char* name){
 }
 
 static pthread_mutex_t lock;
+void send_instant(char* name,char* contents){
+	//pthread_mutex_lock(&lock);
+	//request_friend(name);
+	info(contents,name);
+	//sleep(1);
+	//remove_friend(name);
+	//pthread_mutex_unlock(&lock);
+}
 
 //static char* monitor_str = "(sof 43)\n(monitor 20 10)";
 static char* load_str = "(sof $s)\n(load $data)";
@@ -128,7 +136,7 @@ void load(char* name){
 	header = pl_str(parser.instruction_array[0]);
 	char* tmp = str_sum(header,"\n");
 	char* sstr = str_sum(tmp,str);
-	info(sstr,"term_gui");
+	send_instant("term_gui",sstr);
 	free(tmp);
 	free(str);
 	free(sstr);
@@ -221,7 +229,7 @@ void put_bgm(){
 	_box.objs_length++;
 }
 
-void pick_bgm(){
+void grab_bgm(){
 	_parser parser;
 	parser.index =0;
 	parser.prev_instruction = null;
@@ -255,17 +263,90 @@ void pick_bgm(){
 
 void exec_command(char* command){
 	if(str_cmp(command,"(command-list)")){
-		printf("(clear)");
-		printf("(save $name)");
-		printf("(load $name)");
-		printf("(pick)");
-		printf("(put)");
-		printf("(avatar)");
-		printf("(keyboard)");
-		printf("(save-world $name)");
-		printf("(load-world $name)");
-		printf("(quit)");
+		printf("(bgm)\n(cake)\n(signature)\n(gifts)\n(number)\n(clear)\n(quit)\n");	
+	}else if(str_cmp(command,"(bgm)")){
+		char* bgm_data = load_data("birth.bgm");
+		if(bgm_data==NULL){
+			return;
+		}
+		_parser parser;
+		parser.index =0;
+		parser.prev_instruction = null;
+		parse_instruction(load_str, &parser);
+		_pl* sizepl = &(_pl){"primitive","0"};
+		_pl* datapl = &(_pl){"primitive",bgm_data};
+		pl_replace(parser.instruction_array[1],2,datapl);
+		char* str;
+		str = pl_str(parser.instruction_array[1]);
+		char* its = i_to_s(str_len(str));
+		sizepl->data = its;
+		pl_replace(parser.instruction_array[0],2,sizepl);
+		char* header;
+		header = pl_str(parser.instruction_array[0]);
+		char* tmp = str_sum(header,"\n");
+		char* sstr = str_sum(tmp,str);
+		send_instant("term_gui",sstr);
+		free(tmp);
+		free(str);
+		free(sstr);
+		free(bgm_data);
+		free(its);
+	}else if(str_cmp(command,"(cake)")){
+		char* bgm_data = load_data("cake.bgm");
+		if(bgm_data==NULL){
+			return;
+		}
+		_parser parser;
+		parser.index =0;
+		parser.prev_instruction = null;
+		parse_instruction(load_str, &parser);
+		_pl* sizepl = &(_pl){"primitive","0"};
+		_pl* datapl = &(_pl){"primitive",bgm_data};
+		pl_replace(parser.instruction_array[1],2,datapl);
+		char* str;
+		str = pl_str(parser.instruction_array[1]);
+		char* its = i_to_s(str_len(str));
+		sizepl->data = its;
+		pl_replace(parser.instruction_array[0],2,sizepl);
+		char* header;
+		header = pl_str(parser.instruction_array[0]);
+		char* tmp = str_sum(header,"\n");
+		char* sstr = str_sum(tmp,str);
+		send_instant("term_gui",sstr);
+		free(tmp);
+		free(str);
+		free(sstr);
+		free(its);
+		free(bgm_data);
 	}else if(str_cmp(command,"(signature)")){
+		char* bgm_data = load_data("signature.bgm");
+		if(bgm_data==NULL){
+			return;
+		}
+		_parser parser;
+		parser.index =0;
+		parser.prev_instruction = null;
+		parse_instruction(load_str, &parser);
+		_pl* sizepl = &(_pl){"primitive","0"};
+		_pl* datapl = &(_pl){"primitive",bgm_data};
+		pl_replace(parser.instruction_array[1],2,datapl);
+		char* str;
+		str = pl_str(parser.instruction_array[1]);
+		char* its = i_to_s(str_len(str));
+		sizepl->data = its;
+		pl_replace(parser.instruction_array[0],2,sizepl);
+		char* header;
+		header = pl_str(parser.instruction_array[0]);
+		char* tmp = str_sum(header,"\n");
+		char* sstr = str_sum(tmp,str);
+		send_instant("term_gui",sstr);
+		free(str);
+		free(tmp);
+		free(sstr);
+		free(its);
+		free(bgm_data);
+
+	}else if(str_cmp(command,"(dog)")){
 		char* bgm_data = load_data("dog.bgm");
 		if(bgm_data==NULL){
 			return;
@@ -286,13 +367,12 @@ void exec_command(char* command){
 		header = pl_str(parser.instruction_array[0]);
 		char* tmp = str_sum(header,"\n");
 		char* sstr = str_sum(tmp,str);
-		info(sstr,"term_gui");
+		send_instant("term_gui",sstr);
 		free(str);
 		free(tmp);
 		free(sstr);
 		free(its);
 		free(bgm_data);
-
 	}else if(str_cmp(command,"(gifts)")){
 		printf("not ready...some years later...:(\n");
 	}else if(str_cmp(command,"(clear)")){
@@ -310,11 +390,39 @@ void exec_command(char* command){
 		header = pl_str(parser.instruction_array[0]);
 		char* tmp = str_sum(header,"\n");
 		char* sstr = str_sum(tmp,str);
-		info(sstr,"term_gui");
+		send_instant("term_gui",sstr);
 		free(str);
 		free(tmp);
 		free(sstr);
 		free(its);
+	}else if(str_cmp(command,"(number)")){
+		char* bgm_data = load_data("number.bgm");
+		if(bgm_data==NULL){
+			return;
+		}
+		_parser parser;
+		parser.index =0;
+		parser.prev_instruction = null;
+		parse_instruction(load_str, &parser);
+		_pl* sizepl = &(_pl){"primitive","0"};
+		_pl* datapl = &(_pl){"primitive",bgm_data};
+		pl_replace(parser.instruction_array[1],2,datapl);
+		char* str;
+		str = pl_str(parser.instruction_array[1]);
+		char* its = i_to_s(str_len(str));
+		sizepl->data = its;
+		pl_replace(parser.instruction_array[0],2,sizepl);
+		char* header;
+		header = pl_str(parser.instruction_array[0]);
+		char* tmp = str_sum(header,"\n");
+		char* sstr = str_sum(tmp,str);
+		send_instant("term_gui",sstr);
+		free(tmp);
+		free(str);
+		free(sstr);
+		free(bgm_data);
+		free(its);
+	
 	}else if(str_cmp(command,"(save)")){
 		save(NULL);		
 	}else if(str_cmp(command,"(load)")){
@@ -335,7 +443,7 @@ void exec_command(char* command){
 		header = pl_str(parser.instruction_array[0]);
 		char* tmp = str_sum(header,"\n");
 		char* sstr = str_sum(tmp,str);
-		info(sstr,"term_gui");
+		send_instant("term_gui",sstr);
 		free(its);
 		free(bgm_data);
 		free(str);
@@ -361,7 +469,6 @@ void exec_command(char* command){
 		}else if(str_cmp(name_pl->data,"load-world")){
 			_pl* arg1 = pl_get(command_pl,2);
 			load_world(arg1->data);
-			pthread_cond_signal(&draw_cond);
 		}else if(str_cmp(name_pl->data,"world-size")){
 			//3차원 세계모델의 크기	
 			_pl* arg1 = pl_get(command_pl,2);
@@ -382,7 +489,7 @@ void exec_command(char* command){
 			//주파수(모드) 선택
 		
 		}else if(str_cmp(name_pl->data,"pick")){
-			pick_bgm();
+			grab_bgm();
 			//집어들기
 		}else if(str_cmp(name_pl->data,"down")){
 			_pl* arg1 = pl_get(command_pl,2);
@@ -420,8 +527,6 @@ void exec_command(char* command){
 			state_flag = 1;
 		}else if(str_cmp(name_pl->data,"stop")){
 			state_flag = 0;
-		}else if(str_cmp(name_pl->data,"here")){
-			
 		}else if(str_cmp(name_pl->data,"keyboard")){
 			struct termios oldt, newt;
 			int c;
@@ -481,9 +586,40 @@ void* draw_box(void* args){
 	mem_set(arr,255,_box.dimx*_box.dimy*_box.dimz*4);
 	request_friend("term_gui");
 	while(1){
+		{
+			/*
+			_parser parser;
+			parser.index =0;
+			parser.prev_instruction = null;
+			parse_instruction(load_str, &parser);
+			_pl* sizepl = &(_pl){"primitive","0"};
+			//_pl* datapl = &(_pl){"primitive",""};
+			//pl_replace(parser.instruction_array[1],2,datapl);
+			char* str;
+			str = pl_str(parser.instruction_array[1]);
+			char* its = i_to_s(str_len(str));
+			sizepl->data = its;
+			pl_replace(parser.instruction_array[0],2,sizepl);
+			char* header;
+			header = pl_str(parser.instruction_array[0]);
+			char* tmp = str_sum(header,"\n");
+			char* sstr = str_sum(tmp,str);
+			//pthread_mutex_lock(&lock);
+			//printf("%s\n",sstr);
+			info(sstr,"term_gui2");
+			//pthread_mutex_unlock(&lock);
+			free(tmp);
+			free(str);
+			free(sstr);
+			free(its);
+			//free(bgm_data);
+			*/
+		}
+		//while(state_flag==1){
 		pthread_mutex_lock(&draw_lock);
 		pthread_cond_wait(&draw_cond,&draw_lock);
 		pthread_mutex_unlock(&draw_lock);
+			//sleep(0.4);
 			// 고양이들을 박스에 그려넣음
 			for(int i=0;i<_box.objs_length;i++){
 				_cat cat = _box.objs[i];
@@ -523,6 +659,8 @@ void* draw_box(void* args){
 				}
 			}
 
+			
+
 			bgm_data[monitor_h*monitor_w*4] = '\0';
 			_parser parser;
 			parser.index =0;
@@ -542,7 +680,7 @@ void* draw_box(void* args){
 			char* sstr = str_sum(tmp,str);
 			//pthread_mutex_lock(&lock);
 			//printf("%s\n",sstr);
-			info(sstr,"term_gui");
+			info(sstr,"term_gui2");
 			//pthread_mutex_unlock(&lock);
 			free(tmp);
 			free(str);
@@ -551,7 +689,7 @@ void* draw_box(void* args){
 			//free(bgm_data);
 		//}
 	}
-	remove_friend("term_gui");
+	remove_friend("term_gui2");
 }
 
 int main(){
